@@ -78,7 +78,6 @@ contract SwapAdapter is AccessControl {
         _permit2 = permit2;
         _nativeTokenAdapter = nativeTokenAdapter;
         _nativeResourceID = nativeTokenAdapter._resourceID();
-        IERC20(_weth).approve(address(_permit2), type(uint256).max);
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
 
@@ -425,7 +424,7 @@ contract SwapAdapter is AccessControl {
             tokenIn,
             tokenOut
         );
-        IERC20(tokenIn).forceApprove(address(_permit2), type(uint256).max);
+        IERC20(tokenIn).forceApprove(address(_permit2), amountInMaximum);
         IPermit2(_permit2).approve(tokenIn, address(_swapRouter), uint160(amountInMaximum), uint48(block.timestamp));
         bytes memory commands = abi.encodePacked(V3_SWAP_EXACT_OUT); // V3_SWAP_EXACT_OUT
         bytes[] memory inputs = new bytes[](1);
