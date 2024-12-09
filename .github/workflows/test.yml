@@ -1,7 +1,6 @@
 name: Test
 
 on:
-  push:
   pull_request:
     types: [opened, synchronize, reopened]
 
@@ -45,4 +44,4 @@ jobs:
       - name: Hardhat Tests
         run: |
           yarn test
-          
+
