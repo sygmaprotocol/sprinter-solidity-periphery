@@ -45,25 +45,4 @@ jobs:
       - name: Hardhat Tests
         run: |
           yarn test
-
-  coverage:
-    needs: test
-    name: Coverage
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18.x]
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2.4.0
-      - name: Install Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v2.5.1
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Download contracts artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: contracts-artifacts
-          path: build
-      - name: Yarn install
-        run: yarn install --frozen-lockfile
+          
