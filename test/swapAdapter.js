@@ -44,8 +44,8 @@ describe("SwapAdapter", function () {
       mockNative.target
     );
 
-    usdc = await ethers.getContractAt("ERC20", USDC_ADDRESS);
-    weth = await ethers.getContractAt("ERC20", WETH_ADDRESS);
+    usdc = await ethers.getContractAt("IERC20", USDC_ADDRESS);
+    weth = await ethers.getContractAt("IERC20", WETH_ADDRESS);
     usdcOwner = await ethers.getImpersonatedSigner(USDC_OWNER_ADDRESS);
   }
 
@@ -67,8 +67,8 @@ describe("SwapAdapter", function () {
       mockERC20.target
     );
 
-    usdc = await ethers.getContractAt("ERC20", USDC_ADDRESS);
-    weth = await ethers.getContractAt("ERC20", WETH_ADDRESS);
+    usdc = await ethers.getContractAt("IERC20", USDC_ADDRESS);
+    weth = await ethers.getContractAt("IERC20", WETH_ADDRESS);
     usdcOwner = await ethers.getImpersonatedSigner(USDC_OWNER_ADDRESS);
   }
 
