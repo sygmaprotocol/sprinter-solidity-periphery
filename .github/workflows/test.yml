@@ -41,7 +41,7 @@ jobs:
           echo USDC_OWNER_ADDRESS=$USDC_OWNER_ADDRESS >> .env
         env:
           JSON_RPC_PROVIDER: ${{ secrets.JSON_RPC_PROVIDER }}
-          USDC_OWNER_ADDRESS: ${{ env.USDC_OWNER_ADDRESS }}
+          USDC_OWNER_ADDRESS: ${{ vars.USDC_OWNER_ADDRESS }}
       - name: Hardhat Tests
         run: |
           yarn test
