@@ -5,6 +5,13 @@
   "repository": "https://github.com/sygmaprotocol/sprinter-solidity-periphery.git",
   "author": "ChainSafe Systems",
   "license": "LGPL-3.0-only",
+  "scripts": {
+    "compile": "npx hardhat compile",
+    "test": "npx hardhat test",
+    "lint": "npm run lint:solidity && npm run lint:js",
+    "lint:solidity": "solhint contracts/**/*.sol",
+    "lint:js": "npx eslint"
+  },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
     "@nomicfoundation/hardhat-ethers": "^3.0.8",
@@ -19,9 +26,11 @@
     "@types/mocha": ">=9.1.0",
     "chai": "4.3.7",
     "dotenv": "^16.4.5",
+    "eslint": "^9.16.0",
     "ethers": "^6.13.4",
     "hardhat": "^2.22.16",
     "hardhat-gas-reporter": "^1.0.8",
+    "solhint": "^5.0.3",
     "solidity-coverage": "^0.8.1",
     "ts-node": ">=8.0.0",
     "typechain": "^8.3.0",

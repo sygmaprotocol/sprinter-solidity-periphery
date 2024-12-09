@@ -1,6 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox");
 
-const dotenv = require('dotenv');
+const dotenv = require("dotenv");
 
 dotenv.config();
 

@@ -7,8 +7,6 @@ import "../interfaces/INativeTokenAdapter.sol";
 import "../interfaces/IFeeHandler.sol";
 // import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "hardhat/console.sol";
-
 
 /*
     This is a test contract that serves as a mock entry point to the Sygma Bridge contract

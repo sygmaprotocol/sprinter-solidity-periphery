@@ -1,8 +1,8 @@
 // The Licensed Work is (c) 2022 Sygma
 // SPDX-License-Identifier: LGPL-3.0-only
 
-const { expect } = require("chai");
-const { createResourceID, createERCDepositData, createOptionalContractCallDepositData } = require("./helpers.js");
+const {expect} = require("chai");
+const {createResourceID, createERCDepositData, createOptionalContractCallDepositData} = require("./helpers.js");
 
 describe("SwapAdapter", function () {
   const resourceID_Native = "0x0000000000000000000000000000000000000000000000000000000000000650";
