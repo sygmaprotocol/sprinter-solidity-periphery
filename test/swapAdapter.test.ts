@@ -1,41 +1,55 @@
 // The Licensed Work is (c) 2022 Sygma
 // SPDX-License-Identifier: LGPL-3.0-only
 
-const {expect} = require("chai");
-const {createResourceID, createERCDepositData, createOptionalContractCallDepositData} = require("./helpers.js");
+import { expect }  from "chai";
+import hre from "hardhat";
+import { createResourceID, createERCDepositData, createOptionalContractCallDepositData }  from "./helpers";
+import type {
+  IERC20,
+  SwapAdapter,
+  MockNative,
+  MockERC20,
+  MockFeeHandler
+} from "../typechain-types";
+import { SignerWithAddress } from "@nomicfoundation/hardhat-ethers/signers";
 
 describe("SwapAdapter", function () {
   const resourceID_Native = "0x0000000000000000000000000000000000000000000000000000000000000650";
   const WETH_ADDRESS = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
   const USDC_ADDRESS = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48";
-  const USDC_OWNER_ADDRESS =  process.env.USDC_OWNER_ADDRESS;
+  const USDC_OWNER_ADDRESS = process.env.USDC_OWNER_ADDRESS!;
+  if (!USDC_OWNER_ADDRESS) throw new Error("Env variables not configured (USDC_OWNER_ADDRESS missing)");
   const UNIVERSAL_ROUTER_ADDRESS = "0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD";
   const PERMIT2_ADDRESS = "0x000000000022D473030F116dDEE9F6B43aC78BA3";
   const originDomainID = 1;
   const destinationDomainID = 3;
   const fee = 1000;
-  let recipientAddress, depositorAddress;
+
   const resourceID_USDC = createResourceID(
     USDC_ADDRESS,
     originDomainID
   );
-  let usdc;
-  let weth;
-  let swapAdapter;
-  let usdcOwner;
-  let mockNative;
-  let feeHandler;
+  
+  let recipientAddress: SignerWithAddress;
+  let depositorAddress: SignerWithAddress;
+  let usdc: IERC20;
+  let weth: IERC20;
+  let swapAdapter: SwapAdapter;
+  let usdcOwner: SignerWithAddress;
+  let mockNative: MockNative;
+  let mockERC20: MockERC20;
+  let feeHandler: MockFeeHandler;
 
   async function deployNativeAdapterFixture() {
-    [recipientAddress, depositorAddress] = await ethers.getSigners();
+    [recipientAddress, depositorAddress] = await hre.ethers.getSigners();
     // deploy mock bridge
-    const MockFeeHandler = await ethers.getContractFactory("MockFeeHandler");
+    const MockFeeHandler = await hre.ethers.getContractFactory("MockFeeHandler");
     feeHandler = await MockFeeHandler.deploy(fee);
-    const MockNative = await ethers.getContractFactory("MockNative");
+    const MockNative = await hre.ethers.getContractFactory("MockNative");
     mockNative = await MockNative.deploy(resourceID_Native, feeHandler.target, destinationDomainID);
 
     // deploy swap adapter
-    const SwapAdapter = await ethers.getContractFactory("SwapAdapter");
+    const SwapAdapter = await hre.ethers.getContractFactory("SwapAdapter");
     swapAdapter = await SwapAdapter.deploy(
       mockNative.target,
       WETH_ADDRESS,
@@ -44,21 +58,21 @@ describe("SwapAdapter", function () {
       mockNative.target
     );
 
-    usdc = await ethers.getContractAt("IERC20", USDC_ADDRESS);
-    weth = await ethers.getContractAt("IERC20", WETH_ADDRESS);
-    usdcOwner = await ethers.getImpersonatedSigner(USDC_OWNER_ADDRESS);
+    usdc = await hre.ethers.getContractAt("IERC20", USDC_ADDRESS);
+    weth = await hre.ethers.getContractAt("IERC20", WETH_ADDRESS);
+    usdcOwner = await hre.ethers.getImpersonatedSigner(USDC_OWNER_ADDRESS);
   }
 
   async function deployERC20AdapterFixture() {
-    [owner, recipientAddress, depositorAddress] = await ethers.getSigners();
+    [recipientAddress, depositorAddress] = await hre.ethers.getSigners();
     // deploy mock bridge
-    const MockFeeHandler = await ethers.getContractFactory("MockFeeHandler");
+    const MockFeeHandler = await hre.ethers.getContractFactory("MockFeeHandler");
     feeHandler = await MockFeeHandler.deploy(fee);
-    const MockERC20 = await ethers.getContractFactory("MockERC20");
+    const MockERC20 = await hre.ethers.getContractFactory("MockERC20");
     mockERC20 = await MockERC20.deploy(resourceID_Native, feeHandler.target, destinationDomainID, USDC_ADDRESS);
 
     // deploy swap adapter
-    const SwapAdapter = await ethers.getContractFactory("SwapAdapter");
+    const SwapAdapter = await hre.ethers.getContractFactory("SwapAdapter");
     swapAdapter = await SwapAdapter.deploy(
       mockERC20.target,
       WETH_ADDRESS,
@@ -67,13 +81,13 @@ describe("SwapAdapter", function () {
       mockERC20.target
     );
 
-    usdc = await ethers.getContractAt("IERC20", USDC_ADDRESS);
-    weth = await ethers.getContractAt("IERC20", WETH_ADDRESS);
-    usdcOwner = await ethers.getImpersonatedSigner(USDC_OWNER_ADDRESS);
+    usdc = await hre.ethers.getContractAt("IERC20", USDC_ADDRESS);
+    weth = await hre.ethers.getContractAt("IERC20", WETH_ADDRESS);
+    usdcOwner = await hre.ethers.getImpersonatedSigner(USDC_OWNER_ADDRESS);
   }
 
   describe("Deployment", function () {
-    it("Should deploy the swap adapter", async function () {
+    it("Should deploy the swap adapter with native adapter", async function () {
       await deployNativeAdapterFixture();
     });
   });
@@ -85,7 +99,7 @@ describe("SwapAdapter", function () {
       const pathTokens = [WETH_ADDRESS, USDC_ADDRESS];
       const pathFees = [500];
       const amountInMax = 1000000;
-      const amountOut = ethers.parseUnits("200000", "gwei");
+      const amountOut = hre.ethers.parseUnits("200000", "gwei");
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);
       const depositTx = await swapAdapter.connect(usdcOwner).depositTokensToEth(
         destinationDomainID,
@@ -96,9 +110,9 @@ describe("SwapAdapter", function () {
         pathTokens,
         pathFees
       );
-      expect(await ethers.provider.getBalance(swapAdapter.target)).to.eq(0);
-      expect(await ethers.provider.getBalance(feeHandler.target)).to.eq(fee);
-      expect(await ethers.provider.getBalance(mockNative.target)).to.eq(amountOut);
+      expect(await hre.ethers.provider.getBalance(swapAdapter.target)).to.eq(0);
+      expect(await hre.ethers.provider.getBalance(feeHandler.target)).to.eq(fee);
+      expect(await hre.ethers.provider.getBalance(mockNative.target)).to.eq(amountOut);
 
       const eventFilter = swapAdapter.filters.TokensSwapped();
       const events = await swapAdapter.queryFilter(eventFilter, "latest");
@@ -116,7 +130,7 @@ describe("SwapAdapter", function () {
 
       const pathTokens = [USDC_ADDRESS, WETH_ADDRESS];
       const pathFees = [500];
-      const amountInMax = ethers.parseEther("1");
+      const amountInMax = hre.ethers.parseEther("1");
       const amountOut = 2000000000;
       await swapAdapter.setTokenResourceID(USDC_ADDRESS, resourceID_USDC);
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);
@@ -133,11 +147,11 @@ describe("SwapAdapter", function () {
       );
 
       expect(await usdc.balanceOf(swapAdapter.target)).to.eq(0);
-      expect(await ethers.provider.getBalance(swapAdapter.target)).to.eq(0);
-      expect(await ethers.provider.getBalance(mockERC20.target)).to.eq(0);
-      expect(await ethers.provider.getBalance(UNIVERSAL_ROUTER_ADDRESS)).to.eq(0);
+      expect(await hre.ethers.provider.getBalance(swapAdapter.target)).to.eq(0);
+      expect(await hre.ethers.provider.getBalance(mockERC20.target)).to.eq(0);
+      expect(await hre.ethers.provider.getBalance(UNIVERSAL_ROUTER_ADDRESS)).to.eq(0);
 
-      expect(await ethers.provider.getBalance(feeHandler.target)).to.eq(fee);
+      expect(await hre.ethers.provider.getBalance(feeHandler.target)).to.eq(fee);
       expect(await weth.balanceOf(UNIVERSAL_ROUTER_ADDRESS)).to.eq(0);
       expect(await weth.balanceOf(swapAdapter.target)).to.eq(0);
       expect(await usdc.balanceOf(mockERC20.target)).to.eq(amountOut);
@@ -161,7 +175,7 @@ describe("SwapAdapter", function () {
       const pathTokens = [WETH_ADDRESS, USDC_ADDRESS];
       const pathFees = [500];
       const amountInMax = 1000000;
-      const amountOut = ethers.parseUnits("200000", "gwei");
+      const amountOut = hre.ethers.parseUnits("200000", "gwei");
       const message = "0x01234567890ABCDEF01234567890ABCDEF";
       const executionGasAmount = 30000000;
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);
@@ -176,9 +190,9 @@ describe("SwapAdapter", function () {
         pathTokens,
         pathFees
       );
-      expect(await ethers.provider.getBalance(swapAdapter.target)).to.eq(0);
-      expect(await ethers.provider.getBalance(feeHandler.target)).to.eq(fee);
-      expect(await ethers.provider.getBalance(mockNative.target)).to.eq(amountOut);
+      expect(await hre.ethers.provider.getBalance(swapAdapter.target)).to.eq(0);
+      expect(await hre.ethers.provider.getBalance(feeHandler.target)).to.eq(fee);
+      expect(await hre.ethers.provider.getBalance(mockNative.target)).to.eq(amountOut);
 
       const eventFilter = swapAdapter.filters.TokensSwapped();
       const events = await swapAdapter.queryFilter(eventFilter, "latest");
@@ -196,7 +210,7 @@ describe("SwapAdapter", function () {
 
       const pathTokens = [USDC_ADDRESS, WETH_ADDRESS];
       const pathFees = [500];
-      const amountInMax = ethers.parseEther("1");
+      const amountInMax = hre.ethers.parseEther("1");
       const amountOut = 2000000000;
       const message = "0x01234567890ABCDEF01234567890ABCDEF";
       const executionGasAmount = 30000000;
@@ -218,11 +232,11 @@ describe("SwapAdapter", function () {
       );
 
       expect(await usdc.balanceOf(swapAdapter.target)).to.eq(0);
-      expect(await ethers.provider.getBalance(swapAdapter.target)).to.eq(0);
-      expect(await ethers.provider.getBalance(mockERC20.target)).to.eq(0);
-      expect(await ethers.provider.getBalance(UNIVERSAL_ROUTER_ADDRESS)).to.eq(0);
+      expect(await hre.ethers.provider.getBalance(swapAdapter.target)).to.eq(0);
+      expect(await hre.ethers.provider.getBalance(mockERC20.target)).to.eq(0);
+      expect(await hre.ethers.provider.getBalance(UNIVERSAL_ROUTER_ADDRESS)).to.eq(0);
 
-      expect(await ethers.provider.getBalance(feeHandler.target)).to.eq(fee);
+      expect(await hre.ethers.provider.getBalance(feeHandler.target)).to.eq(fee);
       expect(await weth.balanceOf(UNIVERSAL_ROUTER_ADDRESS)).to.eq(0);
       expect(await weth.balanceOf(swapAdapter.target)).to.eq(0);
       expect(await usdc.balanceOf(mockERC20.target)).to.eq(amountOut);
@@ -251,7 +265,7 @@ describe("SwapAdapter", function () {
       const pathTokens = [WETH_ADDRESS, USDC_ADDRESS];
       const pathFees = [500];
       const amountInMax = 1000000;
-      const amountOut = ethers.parseUnits("200000", "gwei");
+      const amountOut = hre.ethers.parseUnits("200000", "gwei");
       await expect(swapAdapter.connect(usdcOwner).depositTokensToEth(
         destinationDomainID,
         recipientAddress,
@@ -269,7 +283,7 @@ describe("SwapAdapter", function () {
       const pathTokens = [WETH_ADDRESS, USDC_ADDRESS];
       const pathFees = [500, 300];
       const amountInMax = 1000000;
-      const amountOut = ethers.parseUnits("200000", "gwei");
+      const amountOut = hre.ethers.parseUnits("200000", "gwei");
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);
       await expect(swapAdapter.connect(usdcOwner).depositTokensToEth(
         destinationDomainID,
@@ -288,7 +302,7 @@ describe("SwapAdapter", function () {
       const pathTokens = [USDC_ADDRESS, WETH_ADDRESS];
       const pathFees = [500];
       const amountInMax = 1000000;
-      const amountOut = ethers.parseUnits("200000", "gwei");
+      const amountOut = hre.ethers.parseUnits("200000", "gwei");
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);
       await expect(swapAdapter.connect(usdcOwner).depositTokensToEth(
         destinationDomainID,
@@ -307,7 +321,7 @@ describe("SwapAdapter", function () {
       const pathTokens = [USDC_ADDRESS, USDC_ADDRESS];
       const pathFees = [500];
       const amountInMax = 1000000;
-      const amountOut = ethers.parseUnits("200000", "gwei");
+      const amountOut = hre.ethers.parseUnits("200000", "gwei");
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);
       await expect(swapAdapter.connect(usdcOwner).depositTokensToEth(
         destinationDomainID,
@@ -325,7 +339,7 @@ describe("SwapAdapter", function () {
 
       const pathTokens = [USDC_ADDRESS, WETH_ADDRESS];
       const pathFees = [500];
-      const amountInMax = ethers.parseEther("1");
+      const amountInMax = hre.ethers.parseEther("1");
       const amountOut = 2000000000;
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);
       await expect(swapAdapter.connect(usdcOwner).depositEthToTokens(
@@ -346,7 +360,7 @@ describe("SwapAdapter", function () {
 
       const pathTokens = [USDC_ADDRESS, WETH_ADDRESS];
       const pathFees = [500];
-      const amountInMax = ethers.parseEther("1");
+      const amountInMax = hre.ethers.parseEther("1");
       const amountOut = 2000000000;
       await swapAdapter.setTokenResourceID(USDC_ADDRESS, resourceID_USDC);
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);
@@ -365,7 +379,7 @@ describe("SwapAdapter", function () {
 
       const pathTokens = [USDC_ADDRESS, WETH_ADDRESS];
       const pathFees = [500];
-      const amountInMax = ethers.parseEther("1");
+      const amountInMax = hre.ethers.parseEther("1");
       const amountOut = 2000000000;
       await swapAdapter.setTokenResourceID(USDC_ADDRESS, resourceID_USDC);
       await usdc.connect(usdcOwner).approve(swapAdapter.target, amountInMax);

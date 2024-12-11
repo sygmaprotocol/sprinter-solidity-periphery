@@ -7,7 +7,7 @@
   "license": "LGPL-3.0-only",
   "scripts": {
     "compile": "npx hardhat compile",
-    "test": "npx hardhat test",
+    "test": "npx hardhat test --typecheck",
     "lint": "npm run lint:solidity && npm run lint:js",
     "lint:solidity": "solhint contracts/**/*.sol",
     "lint:js": "npx eslint"
