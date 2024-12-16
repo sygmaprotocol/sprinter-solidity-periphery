@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const mainnetFork = {
-  url: `${process.env.JSON_RPC_PROVIDER}`,
+  url: `${process.env.FORK_RPC_PROVIDER}`,
 };
 
 const config: HardhatUserConfig = {

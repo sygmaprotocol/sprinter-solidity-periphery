@@ -226,7 +226,7 @@ contract SwapAdapter is AccessControl {
 
         IWETH(_weth).withdraw(IERC20(_weth).balanceOf(address(this)));
         vars.ERC20HandlerAddress = _bridge._resourceIDToHandlerAddress(vars.resourceID);
-        IERC20(token).approve(address(vars.ERC20HandlerAddress), amountOut);
+        IERC20(token).forceApprove(address(vars.ERC20HandlerAddress), amountOut);
         _bridge.deposit{value: vars.fee}(destinationDomainID, vars.resourceID, vars.depositData, "");
 
         // Return unspent native currency to msg.sender
@@ -398,7 +398,7 @@ contract SwapAdapter is AccessControl {
         IWETH(_weth).withdraw(IERC20(_weth).balanceOf(address(this)));
 
         vars.ERC20HandlerAddress = _bridge._resourceIDToHandlerAddress(vars.resourceID);
-        IERC20(token).approve(address(vars.ERC20HandlerAddress), amountOut);
+        IERC20(token).forceApprove(address(vars.ERC20HandlerAddress), amountOut);
         _bridge.deposit{value: vars.fee}(destinationDomainID, vars.resourceID, vars.depositData, "");
 
         // Return unspent native currency to msg.sender
