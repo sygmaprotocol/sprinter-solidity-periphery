@@ -36,10 +36,10 @@ jobs:
       - name: Create .env with Github Secrets
         run: |
           touch .env
-          echo JSON_RPC_PROVIDER=$JSON_RPC_PROVIDER >> .env
+          echo FORK_RPC_PROVIDER=$FORK_RPC_PROVIDER >> .env
           echo USDC_OWNER_ADDRESS=$USDC_OWNER_ADDRESS >> .env
         env:
-          JSON_RPC_PROVIDER: ${{ secrets.JSON_RPC_PROVIDER }}
+          FORK_RPC_PROVIDER: ${{ secrets.FORK_RPC_PROVIDER }}
           USDC_OWNER_ADDRESS: ${{ vars.USDC_OWNER_ADDRESS }}
       - name: Hardhat Tests
         run: |
