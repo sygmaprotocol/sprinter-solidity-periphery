@@ -36,7 +36,19 @@ contract SwapAdapter is Initializable, AccessControlUpgradeable, UUPSUpgradeable
     /// @custom:oz-upgrades-unsafe-allow state-variable-immutable
     IPermit2 public immutable _permit2;
 
-    mapping(address => bytes32) public tokenToResourceID;
+    /// @custom:storage-location erc7201:sprinter.storage.SwapAdapter
+    struct SwapAdapterStorage {
+        mapping(address => bytes32) _tokenToResourceID;
+    }
+
+    // keccak256(abi.encode(uint256(keccak256("sprinter.storage.SwapAdapter")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant SwapAdapterStorageLocation = 0xa53f4b8c083c15fbcbcce528ddd44001a6874a1376b7bc794219ec6a5664fa00;
+
+    function _getSwapAdapterStorage() private pure returns (SwapAdapterStorage storage $) {
+        assembly {
+            $.slot := SwapAdapterStorageLocation
+        }
+    }
 
     // Used to avoid "stack too deep" error
     struct LocalVars {
@@ -102,8 +114,8 @@ contract SwapAdapter is Initializable, AccessControlUpgradeable, UUPSUpgradeable
 
     // Admin functions
     function setTokenResourceID(address token, bytes32 resourceID) external onlyAdmin {
-        if (tokenToResourceID[token] == resourceID) revert AlreadySet();
-        tokenToResourceID[token] = resourceID;
+        SwapAdapterStorage storage $ = _getSwapAdapterStorage();
+        $._tokenToResourceID[token] = resourceID;
         emit TokenResourceIDSet(token, resourceID);
     }
 
@@ -201,7 +213,7 @@ contract SwapAdapter is Initializable, AccessControlUpgradeable, UUPSUpgradeable
         uint24[] calldata pathFees
     ) external payable {
         LocalVars memory vars;
-        vars.resourceID = tokenToResourceID[token];
+        vars.resourceID = getTokenToResourceId(token);
         if (vars.resourceID == bytes32(0)) revert TokenInvalid();
 
         // Compose depositData
@@ -370,7 +382,7 @@ contract SwapAdapter is Initializable, AccessControlUpgradeable, UUPSUpgradeable
         uint24[] calldata pathFees
     ) external payable {
         LocalVars memory vars;
-        vars.resourceID = tokenToResourceID[token];
+        vars.resourceID = getTokenToResourceId(token);
         if (vars.resourceID == bytes32(0)) revert TokenInvalid();
 
         // Compose depositData
@@ -475,6 +487,14 @@ contract SwapAdapter is Initializable, AccessControlUpgradeable, UUPSUpgradeable
             path = abi.encodePacked(path, tokens[i], fees[i]);
         }
         path = abi.encodePacked(path, tokens[tokens.length - 1]);
+    }
+
+    /**
+     * @dev Returns the value of _tokenToResourceId mapping.
+     */
+    function getTokenToResourceId(address token) public view virtual returns (bytes32) {
+        SwapAdapterStorage storage $ = _getSwapAdapterStorage();
+        return $._tokenToResourceID[token];
     }
 
     receive() external payable {}
