@@ -3,6 +3,7 @@
 
 import { expect }  from "chai";
 import hre from "hardhat";
+import { upgrades } from "hardhat";
 import { createResourceID, createERCDepositData, createOptionalContractCallDepositData }  from "./helpers";
 import type {
   IERC20,
@@ -49,14 +50,18 @@ describe("SwapAdapter", function () {
     mockNative = await MockNative.deploy(resourceID_Native, feeHandler.target, destinationDomainID);
 
     // deploy swap adapter
-    const SwapAdapter = await hre.ethers.getContractFactory("SwapAdapter");
-    swapAdapter = await SwapAdapter.deploy(
-      mockNative.target,
-      WETH_ADDRESS,
-      UNIVERSAL_ROUTER_ADDRESS,
-      PERMIT2_ADDRESS,
-      mockNative.target
-    );
+    const SwapAdapter__factory = await hre.ethers.getContractFactory("SwapAdapter");
+    swapAdapter = (await upgrades.deployProxy(SwapAdapter__factory, [],
+      {
+        kind: "uups",
+        unsafeAllow: ["constructor"],
+        constructorArgs: [      mockNative.target,
+          WETH_ADDRESS,
+          UNIVERSAL_ROUTER_ADDRESS,
+          PERMIT2_ADDRESS,
+          mockNative.target]
+      })) as unknown as SwapAdapter;
+    await swapAdapter.waitForDeployment();
 
     usdc = await hre.ethers.getContractAt("IERC20", USDC_ADDRESS);
     weth = await hre.ethers.getContractAt("IERC20", WETH_ADDRESS);
@@ -72,14 +77,19 @@ describe("SwapAdapter", function () {
     mockERC20 = await MockERC20.deploy(resourceID_Native, feeHandler.target, destinationDomainID, USDC_ADDRESS);
 
     // deploy swap adapter
-    const SwapAdapter = await hre.ethers.getContractFactory("SwapAdapter");
-    swapAdapter = await SwapAdapter.deploy(
-      mockERC20.target,
-      WETH_ADDRESS,
-      UNIVERSAL_ROUTER_ADDRESS,
-      PERMIT2_ADDRESS,
-      mockERC20.target
-    );
+    const SwapAdapter__factory = await hre.ethers.getContractFactory("SwapAdapter");
+    swapAdapter = (await upgrades.deployProxy(SwapAdapter__factory, [],
+      {
+        kind: "uups",
+        unsafeAllow: ["constructor"],
+        constructorArgs: [      
+          mockERC20.target,
+          WETH_ADDRESS,
+          UNIVERSAL_ROUTER_ADDRESS,
+          PERMIT2_ADDRESS,
+          mockERC20.target]
+      })) as unknown as SwapAdapter;
+    await swapAdapter.waitForDeployment();
 
     usdc = await hre.ethers.getContractAt("IERC20", USDC_ADDRESS);
     weth = await hre.ethers.getContractAt("IERC20", WETH_ADDRESS);
